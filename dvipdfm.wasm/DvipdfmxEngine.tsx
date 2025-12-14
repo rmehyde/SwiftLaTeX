@@ -20,7 +20,7 @@ export enum EngineStatus {
     Error,
 }
 
-const XDVPDFMX_ENGINE_PATH = new URL('./swiftlatexdvipdfm.js', import.meta.url).toString();
+const ENGINE_PATH = 'swiftlatexdvipdfm.js'
 
 export class CompileResult {
     pdf: Uint8Array | undefined = undefined;
@@ -33,13 +33,13 @@ export class DvipdfmxEngine {
     latexWorkerStatus: EngineStatus = EngineStatus.Init;
     constructor() {}
 
-    async loadEngine(): Promise<void> {
+    async loadEngine(engineUrl: string | URL = ENGINE_PATH): Promise<void> {
         if (this.latexWorker !== undefined) {
             throw new Error('Other instance is running, abort()');
         }
         this.latexWorkerStatus = EngineStatus.Init;
         await new Promise<void>((resolve, reject) => {
-            this.latexWorker = new Worker(XDVPDFMX_ENGINE_PATH);
+            this.latexWorker = new Worker(engineUrl, { type: 'module' });
             this.latexWorker.onmessage = (ev: any) => {
                 const data: any = ev.data;
                 const cmd: string = data.result as string;
@@ -51,6 +51,16 @@ export class DvipdfmxEngine {
                     reject();
                 }
             };
+            this.latexWorker.onerror = (ev: ErrorEvent) => {
+                console.error('Dvipdfmx Worker error:', ev.message, ev.filename, ev.lineno);
+                this.latexWorkerStatus = EngineStatus.Error;
+                const details = [
+                    ev.message,
+                    ev.filename ? `File: ${ev.filename}` : null,
+                    ev.lineno ? `Line: ${ev.lineno}` : null,
+                ].filter(Boolean).join('\n');
+                reject(new Error(details));
+            }
         });
         this.latexWorker!.onmessage = (_: any) => {};
         this.latexWorker!.onerror = (_: any) => {};

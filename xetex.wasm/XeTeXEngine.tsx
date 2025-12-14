@@ -22,7 +22,7 @@ export enum EngineStatus {
 	Error
 }
 
-const ENGINE_PATH = new URL('./swiftlatexxetex.js', import.meta.url).toString();
+const ENGINE_PATH = 'swiftlatexxetex.js'
 
 export class CompileResult {
 	pdf: Uint8Array | undefined = undefined;
@@ -37,24 +37,48 @@ export class XeTeXEngine {
 
 	}
 
-	public async loadEngine(): Promise<void> {
+	public async loadEngine(engineUrl: string | URL = ENGINE_PATH): Promise<void> {
 		if (this.latexWorker !== undefined) {
 			throw new Error('Other instance is running, abort()');
 		}
 		this.latexWorkerStatus = EngineStatus.Init;
 		await new Promise<void>((resolve, reject) => {
-			this.latexWorker = new Worker(ENGINE_PATH);
+			console.log('Creating XeTeX Worker with URL:', engineUrl);
+			this.latexWorker = new Worker(engineUrl, { type: 'module' });
+			
 			this.latexWorker.onmessage = (ev: any) => {
+				console.log('XeTeX Worker message received:', ev.data);
 				const data: any = ev['data'];
 				const cmd: string = data['result'] as string;
 				if (cmd === 'ok') {
 					this.latexWorkerStatus = EngineStatus.Ready;
+					console.log('XeTeX Worker loaded successfully');
 					resolve();
 				} else {
 					this.latexWorkerStatus = EngineStatus.Error;
-					reject();
+					console.error('XeTeX Worker failed with message:', data);
+					reject(new Error('XeTeX Worker failed: ' + JSON.stringify(data)));
 				}
 			};
+			
+			this.latexWorker.onerror = (ev: ErrorEvent) => {
+				console.error('XeTeX Worker error:', ev.message, ev.filename, ev.lineno);
+				this.latexWorkerStatus = EngineStatus.Error;
+				const details = [
+					ev.message,
+					ev.filename ? `File: ${ev.filename}` : null,
+					ev.lineno ? `Line: ${ev.lineno}` : null,
+				].filter(Boolean).join('\n');
+				reject(new Error(details));
+			};
+			
+			// Add timeout to prevent infinite hanging
+			setTimeout(() => {
+				if (this.latexWorkerStatus === EngineStatus.Init) {
+					console.error('XeTeX Worker timed out during initialization');
+					reject(new Error('XeTeX Worker initialization timeout'));
+				}
+			}, 10000); // 10 second timeout
 		});
 		this.latexWorker!.onmessage = (_: any) => {
 		};
