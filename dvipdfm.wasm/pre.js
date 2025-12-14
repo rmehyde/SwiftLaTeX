@@ -3,7 +3,7 @@ const WORKROOT = "/work";
 var Module = {};
 self.memlog = "";
 self.mainfile = "main.tex";
-self.texlive_endpoint = "https://texlive2.swiftlatex.com/";
+self.texlive_endpoint = "/lib/";
 Module['print'] = function(a) {
     self.memlog += (a + "\n");
     console.log(a);
@@ -192,14 +192,10 @@ self['onmessage'] = function(ev) {
     }
 };
 
-let texlive404_cache = {};
-let texlive200_cache = {};
-
 function kpse_find_file_impl(nameptr, format, _mustexist) {
-
     let reqname = UTF8ToString(nameptr);
 
-    // It is a hack , since webassembly version latex engine stores 
+    // It is a hack, since webassembly version latex engine stores 
     // all templates file inside /tex/, therefore, we have to fetch it again
     if (reqname.startsWith("/tex/")) {
         reqname = reqname.substr(5);
@@ -209,43 +205,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
         return 0;
     }
 
-    const cacheKey = format + "/" + reqname ;
-
-    if (cacheKey in texlive404_cache) {
-        return 0;
-    }
-
-    if (cacheKey in texlive200_cache) {
-        const savepath = texlive200_cache[cacheKey];
-        return _allocate(intArrayFromString(savepath));
-    }
-
-    
-    const remote_url = self.texlive_endpoint + 'xetex/' + cacheKey;
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", remote_url, false);
-    xhr.timeout = 150000;
-    xhr.responseType = "arraybuffer";
-    console.log("Start downloading texlive file " + remote_url);
-    try {
-        xhr.send();
-    } catch (err) {
-        console.log("TexLive Download Failed " + remote_url);
-        return 0;
-    }
-
-    if (xhr.status === 200) {
-        let arraybuffer = xhr.response;
-        const fileid = xhr.getResponseHeader('fileid');
-        const savepath = TEXCACHEROOT + "/" + fileid;
-        FS.writeFile(savepath, new Uint8Array(arraybuffer));
-        texlive200_cache[cacheKey] = savepath;
-        return _allocate(intArrayFromString(savepath));
-
-    } else if (xhr.status === 301) {
-        console.log("TexLive File not exists " + remote_url);
-        texlive404_cache[cacheKey] = 1;
-        return 0;
-    } 
-    return 0;
+    const cacheKey = format + "/" + reqname;
+    return downloadAndCacheFile(cacheKey, 'xetex/', 'TexLive', texlive200_cache, texlive404_cache);
 }
