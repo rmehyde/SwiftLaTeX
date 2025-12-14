@@ -20,7 +20,9 @@ export enum EngineStatus {
     Error,
 }
 
-const XDVPDFMX_ENGINE_PATH = new URL('./swiftlatexdvipdfm.js', import.meta.url).toString();
+// TODO: clean up!! the latter is for statically-hosted engine but we want to get the former working
+// const XDVPDFMX_ENGINE_PATH = new URL('./swiftlatexdvipdfm.js', import.meta.url).toString();
+const XDVPDFMX_ENGINE_PATH = '/lib/swiftlatex/swiftlatexdvipdfm.js';
 
 export class CompileResult {
     pdf: Uint8Array | undefined = undefined;
