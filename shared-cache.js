@@ -6,44 +6,64 @@ let texlive200_cache = {};
 let font200_cache = {};
 let font404_cache = {};
 
-function downloadAndCacheFile(cacheKey, endpoint, logPrefix, cache200, cache404) {
+async function downloadAndCacheFile(cacheKey, endpoint, logPrefix, cache200, cache404) {
+    // Check 404 cache
     if (cacheKey in cache404) {
         return 0;
     }
 
+    // Check 200 cache
     if (cacheKey in cache200) {
         const savepath = cache200[cacheKey];
-        return _allocate(intArrayFromString(savepath));
+        
+        // Verify file actually exists in VFS before returning
+        try {
+            const stat = FS.stat(savepath);
+            return _allocate(intArrayFromString(savepath));
+        } catch (err) {
+            // Remove from cache and continue to re-download
+            delete cache200[cacheKey];
+        }
     }
 
     const remote_url = self.texlive_endpoint + endpoint + cacheKey;
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", remote_url, false);
-    xhr.timeout = 150000;
-    xhr.responseType = "arraybuffer";
-    console.log("Start downloading " + logPrefix + " file " + remote_url);
     
     try {
-        xhr.send();
+        const response = await fetch(remote_url);
+        
+        if (response.ok) {
+            const arraybuffer = await response.arrayBuffer();
+            
+            const fileid = remote_url.split("/").pop();
+            const savepath = TEXCACHEROOT + "/" + fileid;
+            
+            try {
+                FS.writeFile(savepath, new Uint8Array(arraybuffer));
+                
+                // Immediately verify the write worked
+                const stat = FS.stat(savepath);
+                
+                // Cache the path
+                cache200[cacheKey] = savepath;
+                
+                // Allocate and return the path
+                const allocatedPath = _allocate(intArrayFromString(savepath));
+                return allocatedPath;
+                
+            } catch (writeErr) {
+                console.error("DEBUG: [VFS_WRITE_ERROR] Failed to write file to VFS:", writeErr);
+                return 0;
+            }
+            
+        } else if (response.status === 301 || response.status === 404) {
+            cache404[cacheKey] = 1;
+            return 0;
+        } else {
+            return 0;
+        }
+        
     } catch (err) {
-        console.log(logPrefix + " Download Failed " + remote_url);
+        console.error("DEBUG: [FETCH_EXCEPTION] Network error fetching", remote_url, "error:", err);
         return 0;
     }
-
-    if (xhr.status === 200) {
-        let arraybuffer = xhr.response;
-        const fileid = remote_url.split("/").pop();
-
-        const savepath = TEXCACHEROOT + "/" + fileid;
-        FS.writeFile(savepath, new Uint8Array(arraybuffer));
-        cache200[cacheKey] = savepath;
-        return _allocate(intArrayFromString(savepath));
-
-    } else if (xhr.status === 301 || xhr.status === 404) {
-        console.log(logPrefix + " File not exists " + remote_url);
-        cache404[cacheKey] = 1;
-        return 0;
-    }
-    
-    return 0;
 }

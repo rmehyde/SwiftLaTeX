@@ -215,5 +215,5 @@ async function kpse_find_file_impl(nameptr, format, _mustexist) {
     }
 
     const cacheKey = format + "/" + reqname;
-    return downloadAndCacheFile(cacheKey, 'xetex/', 'TexLive', texlive200_cache, texlive404_cache);
+    return await downloadAndCacheFile(cacheKey, 'xetex/', 'TexLive', texlive200_cache, texlive404_cache);
 }
