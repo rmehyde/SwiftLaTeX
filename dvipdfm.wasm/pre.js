@@ -201,7 +201,7 @@ self['onmessage'] = function(ev) {
     }
 };
 
-function kpse_find_file_impl(nameptr, format, _mustexist) {
+async function kpse_find_file_impl(nameptr, format, _mustexist) {
     let reqname = UTF8ToString(nameptr);
 
     // It is a hack, since webassembly version latex engine stores 

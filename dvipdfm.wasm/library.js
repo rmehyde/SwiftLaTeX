@@ -1,7 +1,10 @@
 mergeInto(LibraryManager.library, {
+  // kpse_find_file_js(nameptr, format, mustexist) -> char*
+  kpse_find_file_js__sig: "iiii",
   kpse_find_file_js: function (nameptr, format, mustexist) {
-    const ret = kpse_find_file_impl(nameptr, format, mustexist);
-    console.log("[KPSE_RET]", ret, "then?", ret && typeof ret.then === "function");
-    return Asyncify.handleAsync(() => Promise.resolve(ret).then(ptr => ptr | 0));
-  }
+    return Asyncify.handleAsync(async () => {
+      const ptr = await kpse_find_file_impl(nameptr, format, mustexist);
+      return ptr | 0;
+    });
+  },
 });
