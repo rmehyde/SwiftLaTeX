@@ -9,8 +9,8 @@ LDFLAGS 		=  	$(DEBUGFLAGS)  --js-library library.js  \
   				-s USE_LIBPNG=1 --pre-js ../shared-cache.js --pre-js pre.js \
   				-s ASYNCIFY=1 \
   				-s ASYNCIFY_IMPORTS='["kpse_find_file_js"]' \
- 					-s EXPORTED_FUNCTIONS='["_compilePDF", "_setMainEntry", "_main", "_malloc"]' -s NO_EXIT_RUNTIME=1 \
-  					-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_RUNTIME_METHODS=["cwrap","ccall"] -fno-rtti -fno-exceptions
+				-s EXPORTED_FUNCTIONS='["_compilePDF", "_setMainEntry", "_main", "_malloc"]' -s NO_EXIT_RUNTIME=1 \
+				-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_RUNTIME_METHODS=["cwrap","ccall"] -fno-rtti -fno-exceptions
 CXX_LINK 		= 	$(CXX) -o $@ $(LDFLAGS)
 
 CSOURCES 		=  	core-memory.c core-bridge.c \

@@ -112,12 +112,18 @@ Module['onAbort'] = function() {
     return;
 };
 
-function compileLaTeXRoutine() {
+async function compileLaTeXRoutine() {
     prepareExecutionContext();
     const setMainFunction = cwrap('setMainEntry', 'number', ['string']);
     setMainFunction(self.mainfile);
-    
-    let status = _compileLaTeX();
+
+    let status = await Module.ccall(
+        "compileLaTeX",  // c symbol name, no leading underscore
+        "number",
+        [],
+        [],
+        { async: true }
+    );
     if (status === 0) {
         let pdfArrayBuffer = null;
         _compileBibtex();
@@ -240,7 +246,10 @@ self['onmessage'] = function(ev) {
     let data = ev['data'];
     let cmd = data['cmd'];
     if (cmd === 'compilelatex') {
-    	compileLaTeXRoutine();
+        compileLaTeXRoutine().catch(err => {
+            console.error(err);
+            self.postMessage({ result: 'failed', status: -1, log: String(err?.stack || err), cmd: 'compile' });
+        });
     } else if (cmd === 'compileformat') {
         compileFormatRoutine();
     } else if (cmd === "settexliveurl") {
@@ -261,7 +270,7 @@ self['onmessage'] = function(ev) {
     }
 };
 
-function kpse_find_file_impl(nameptr, format, _mustexist) {
+async function kpse_find_file_impl(nameptr, format, _mustexist) {
     const reqname = UTF8ToString(nameptr);
 
     if (reqname.includes("/")) {
@@ -272,7 +281,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
     return downloadAndCacheFile(cacheKey, 'xetex/', 'TexLive', texlive200_cache, texlive404_cache);
 }
 
-function fontconfig_search_font_impl(fontnamePtr, varStringPtr) {
+async function fontconfig_search_font_impl(fontnamePtr, varStringPtr) {
     const fontname = UTF8ToString(fontnamePtr);
     let variant = UTF8ToString(varStringPtr);
     if (!variant) {
