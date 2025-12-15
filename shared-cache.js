@@ -1,12 +1,10 @@
 // Shared file caching implementation for SwiftLaTeX
 // Used by both dvipdfm.wasm and xetex.wasm modules
 
-let texlive404_cache = {};
-let texlive200_cache = {};
-let font200_cache = {};
-let font404_cache = {};
+let cache200 = {};
+let cache404 = {};
 
-async function downloadAndCacheFile(cacheKey, endpoint, logPrefix, cache200, cache404) {
+async function downloadAndCacheFile(cacheKey, endpoint) {
     // Check 404 cache
     if (cacheKey in cache404) {
         return 0;

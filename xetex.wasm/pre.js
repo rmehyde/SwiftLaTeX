@@ -278,7 +278,7 @@ async function kpse_find_file_impl(nameptr, format, _mustexist) {
     }
 
     const cacheKey = format + "/" + reqname;
-    return await downloadAndCacheFile(cacheKey, 'xetex/', 'TexLive', texlive200_cache, texlive404_cache);
+    return await downloadAndCacheFile(cacheKey, 'xetex/');
 }
 
 async function fontconfig_search_font_impl(fontnamePtr, varStringPtr) {
@@ -290,5 +290,5 @@ async function fontconfig_search_font_impl(fontnamePtr, varStringPtr) {
     variant = variant.replace(/\//g, '_');
 
     const cacheKey = variant + '/' + fontname;
-    return await downloadAndCacheFile(cacheKey, 'fontconfig/', 'Font', font200_cache, font404_cache);
+    return await downloadAndCacheFile(cacheKey, 'fontconfig/');
 }
