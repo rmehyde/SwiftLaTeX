@@ -85,11 +85,17 @@ Module['onAbort'] = function() {
 };
 
 
-function compilePDFRoutine() {
+async function compilePDFRoutine() {
     prepareExecutionContext();
     const setMainFunction = cwrap('setMainEntry', 'number', ['string']);
     setMainFunction(self.mainfile);
-    let status = _compilePDF();
+    let status = await Module.ccall(
+        "compilePDF",  // c symbol name, no leading underscore
+        "number",
+        [],
+        [],
+        { async: true }
+    );
     if (status === 0) {
         let pdfArrayBuffer = null;
         try {
@@ -173,7 +179,10 @@ self['onmessage'] = function(ev) {
     let data = ev['data'];
     let cmd = data['cmd'];
     if (cmd === 'compilepdf') {
-        compilePDFRoutine();
+        compilePDFRoutine().catch(err => {
+            console.error(err);
+            self.postMessage({ result: 'failed', status: -1, log: String(err?.stack || err), cmd: 'compile' });
+        });
     } else if (cmd === "mkdir") {
         mkdirRoutine(data['url']);
     } else if (cmd === "settexliveurl") {
