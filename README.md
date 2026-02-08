@@ -94,13 +94,28 @@ make
 ```
 
 
+## CTAN Files
+LaTeX is not a stand-alone typesetting program in itself, but document preparation software that runs on top of Donald 
+E. Knuth's TeX typesetting system. TeX distributions usually bundle together all the parts needed for a working TeX 
+system and they generally add to this both configuration and maintenance utilities. Nowadays LaTeX, and many of the 
+packages built on it, form an important component of any major TeX distribution. In the original SwiftLaTeX, all 
+required files are fetched from CTAN (Comprehensive TeX Archive Network), https://www.ctan.org, or SwiftLaTeX's
+(now-offline) mirror server https://texlive.swiftlatex.com, which ran their 
+[Texlive-Ondemand](https://github.com/SwiftLaTeX/Texlive-Ondemand) server.
 
+## Reese's Fork
 
+This fork of SwiftLaTeX:
+- Changes the response-handling behavior to support statically hosted TeX files
+- Includes fixes such as exporting malloc and configurable engine paths to support different environments (e.g. Next.js)
 
-## CTAN files
-LaTeX is not a stand-alone typesetting program in itself, but document preparation software that runs on top of Donald E. Knuth's TeX typesetting system. TeX distributions usually bundle together all the parts needed for a working TeX system and they generally add to this both configuration and maintenance utilities. Nowadays LaTeX, and many of the packages built on it, form an important component of any major TeX distribution. 
-In SwiftLaTeX, all required files are fetched from CTAN (Comprehensive TeX Archive Network), https://www.ctan.org, or our mirror server https://texlive.swiftlatex.com. 
-You can checkout the repo https://github.com/SwiftLaTeX/Texlive-Ondemand and host your own server. 
+The response-handling changes allow for static hosting of the files, for example on a CDN. This is not possible in the 
+standard distribution because the main repo expects specific server behavior, e.g. returning a 301 instead of 404 for 
+missing files.
+
+Rather than hosting all files, you can also use [my fork of Texlive-Ondemand](https://github.com/rmehyde/Texlive-Ondemand) 
+to proxy to a remote server while building out a local cache. This cache can then be statically hosted, and will only 
+contain the files you need for your specific usage pattern.
 
 ## WYSIWYG Editor
 We are also working hard to bring back our WYSIWYG latex editor. The editor is pretty similar to overleaf, except users are allowed to edit pdf output directly. 
