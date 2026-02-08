@@ -45,12 +45,14 @@ export class DvipdfmxEngine {
                 const cmd: string = data.result as string;
                 if (cmd === 'ok') {
                     this.latexWorkerStatus = EngineStatus.Ready;
+                    console.log('Dvipdfmx Worker loaded successfully')
                     resolve();
                 } else {
                     this.latexWorkerStatus = EngineStatus.Error;
-                    reject();
+                    reject(new Error('Dvipdfmx Worker failed: ' + JSON.stringify(data)));
                 }
             };
+
             this.latexWorker.onerror = (ev: ErrorEvent) => {
                 console.error('Dvipdfmx Worker error:', ev.message, ev.filename, ev.lineno);
                 this.latexWorkerStatus = EngineStatus.Error;

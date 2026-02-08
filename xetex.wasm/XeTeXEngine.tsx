@@ -43,11 +43,9 @@ export class XeTeXEngine {
 		}
 		this.latexWorkerStatus = EngineStatus.Init;
 		await new Promise<void>((resolve, reject) => {
-			console.log('Creating XeTeX Worker with URL:', engineUrl);
 			this.latexWorker = new Worker(engineUrl, { type: 'module' });
 			
 			this.latexWorker.onmessage = (ev: any) => {
-				console.log('XeTeX Worker message received:', ev.data);
 				const data: any = ev['data'];
 				const cmd: string = data['result'] as string;
 				if (cmd === 'ok') {
@@ -56,7 +54,6 @@ export class XeTeXEngine {
 					resolve();
 				} else {
 					this.latexWorkerStatus = EngineStatus.Error;
-					console.error('XeTeX Worker failed with message:', data);
 					reject(new Error('XeTeX Worker failed: ' + JSON.stringify(data)));
 				}
 			};
