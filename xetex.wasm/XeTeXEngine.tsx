@@ -25,7 +25,7 @@ export enum EngineStatus {
 const ENGINE_PATH = 'swiftlatexxetex.js'
 
 export class CompileResult {
-	pdf: Uint8Array | undefined = undefined;
+	pdf: Uint8Array<ArrayBuffer> | undefined = undefined;
 	status: number = -254;
 	log: string = 'No log';
 }
@@ -111,7 +111,7 @@ export class XeTeXEngine {
 				nice_report.status = status;
 				nice_report.log = log;
 				if (result === 'ok') {
-					const pdf: Uint8Array = new Uint8Array(data['pdf']);
+					const pdf: Uint8Array<ArrayBuffer> = new Uint8Array(data['pdf']);
 					nice_report.pdf = pdf;
 				}
 				resolve(nice_report);

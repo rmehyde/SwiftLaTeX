@@ -23,7 +23,7 @@ export enum EngineStatus {
 const ENGINE_PATH = 'swiftlatexdvipdfm.js'
 
 export class CompileResult {
-    pdf: Uint8Array | undefined = undefined;
+    pdf: Uint8Array<ArrayBuffer> | undefined = undefined;
     status: number = -254;
     log: string = 'No log';
 }
@@ -98,7 +98,7 @@ export class DvipdfmxEngine {
                 nice_report.status = status;
                 nice_report.log = log;
                 if (result === 'ok') {
-                    const pdf: Uint8Array = new Uint8Array(data.pdf);
+                    const pdf: Uint8Array<ArrayBuffer> = new Uint8Array(data.pdf);
                     nice_report.pdf = pdf;
                 }
                 resolve(nice_report);
@@ -118,7 +118,7 @@ export class DvipdfmxEngine {
         }
     }
 
-    writeMemFSFile(filename: string, srccode: string | ArrayBuffer): void {
+    writeMemFSFile(filename: string, srccode: string | ArrayBuffer | Uint8Array): void {
         this.checkEngineStatus();
         if (srccode === undefined) {
             return;
