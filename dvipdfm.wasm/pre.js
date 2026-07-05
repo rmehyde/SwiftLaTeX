@@ -169,6 +169,32 @@ function setTexliveEndpoint(url) {
     }
 }
 
+function prewarmRoutine(bundle, seal) {
+    bundle = bundle || {};
+    prewarmCache(bundle.files || [], bundle.version).then(function(stats) {
+        if (seal && stats.failed === 0) {
+            self.cacheSealed = true;
+        } else if (seal) {
+            console.warn('[prewarm] not sealing: ' + stats.failed + ' file(s) failed to prewarm');
+        }
+        self.postMessage({
+            'result': 'ok',
+            'cmd': 'prewarm',
+            'hydrated': stats.hydrated,
+            'fetched': stats.fetched,
+            'failed': stats.failed,
+            'skipped': stats.skipped,
+            'total': stats.total
+        });
+    }).catch(function(err) {
+        self.postMessage({
+            'result': 'failed',
+            'cmd': 'prewarm',
+            'log': String(err)
+        });
+    });
+}
+
 self['onmessage'] = function(ev) {
     let data = ev['data'];
     let cmd = data['cmd'];
@@ -187,6 +213,8 @@ self['onmessage'] = function(ev) {
         self.close();
     } else if (cmd === "flushcache") {
         cleanDir(WORKROOT);
+    } else if (cmd === "prewarm") {
+        prewarmRoutine(data['manifest'], data['seal']);
     } else {
         console.error("Unknown command " + cmd);
     }

@@ -194,6 +194,26 @@ export class XeTeXEngine {
 		}
 	}
 
+	public async prewarm(bundle: { version: string; files: { cacheKey: string; endpoint: string }[] }, seal: boolean = false): Promise<{ hydrated: number; fetched: number; failed: number; skipped: number; total: number }> {
+		this.checkEngineStatus();
+		this.latexWorkerStatus = EngineStatus.Busy;
+		const stats = await new Promise<{ hydrated: number; fetched: number; failed: number; skipped: number; total: number }>((resolve, reject) => {
+			this.latexWorker!.onmessage = (ev: any) => {
+				const data: any = ev['data'];
+				if (data['cmd'] !== 'prewarm') return;
+				this.latexWorkerStatus = EngineStatus.Ready;
+				if (data['result'] === 'ok') {
+					resolve({ hydrated: data['hydrated'], fetched: data['fetched'], failed: data['failed'], skipped: data['skipped'], total: data['total'] });
+				} else {
+					reject(new Error(data['log'] || 'prewarm failed'));
+				}
+			};
+			this.latexWorker!.postMessage({ 'cmd': 'prewarm', 'manifest': bundle, 'seal': seal });
+		});
+		this.latexWorker!.onmessage = (_: any) => {};
+		return stats;
+	}
+
 	public closeWorker(): void {
 		if (this.latexWorker !== undefined) {
 			this.latexWorker.postMessage({ 'cmd': 'grace' });

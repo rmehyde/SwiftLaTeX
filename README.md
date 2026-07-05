@@ -108,6 +108,7 @@ required files are fetched from CTAN (Comprehensive TeX Archive Network), https:
 This fork of SwiftLaTeX:
 - Changes the response-handling behavior to support statically hosted TeX files
 - Includes fixes such as exporting malloc and configurable engine paths to support different environments (e.g. Next.js)
+- Provides a [durable cache](./shared-cache.js) with support for pre-warming to improve performance
 
 The response-handling changes allow for static hosting of the files, for example on a CDN. This is not possible in the 
 standard distribution because the main repo expects specific server behavior, e.g. returning a 301 instead of 404 for 

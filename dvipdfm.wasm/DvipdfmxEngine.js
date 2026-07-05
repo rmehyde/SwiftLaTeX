@@ -137,6 +137,27 @@ export class DvipdfmxEngine {
             this.latexWorker.postMessage({ 'cmd': 'settexliveurl', 'url': url });
         }
     }
+    async prewarm(bundle, seal = false) {
+        this.checkEngineStatus();
+        this.latexWorkerStatus = EngineStatus.Busy;
+        const stats = await new Promise((resolve, reject) => {
+            this.latexWorker.onmessage = (ev) => {
+                const data = ev.data;
+                if (data.cmd !== 'prewarm')
+                    return;
+                this.latexWorkerStatus = EngineStatus.Ready;
+                if (data.result === 'ok') {
+                    resolve({ hydrated: data.hydrated, fetched: data.fetched, failed: data.failed, skipped: data.skipped, total: data.total });
+                }
+                else {
+                    reject(new Error(data.log || 'prewarm failed'));
+                }
+            };
+            this.latexWorker.postMessage({ cmd: 'prewarm', manifest: bundle, seal });
+        });
+        this.latexWorker.onmessage = (_) => { };
+        return stats;
+    }
     closeWorker() {
         if (this.latexWorker !== undefined) {
             this.latexWorker.postMessage({ cmd: 'grace' });
